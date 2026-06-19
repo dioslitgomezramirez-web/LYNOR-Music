@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>LYNOR Music</title>
     
-    <!-- === ETIQUETAS PWA PARA PANTALLA COMPLETA NATIVA === -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="LYNOR">
@@ -66,6 +65,47 @@
             transition: background-color 0.4s ease, color 0.4s ease;
         }
 
+        /* --- SPLASH SCREEN --- */
+        .splash-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-base); z-index: 9999;
+            display: flex; justify-content: center; align-items: center;
+            transition: opacity 0.6s var(--ios-spring), transform 0.6s var(--ios-spring), filter 0.6s ease;
+            will-change: transform, opacity, filter;
+        }
+        .splash-screen.hide { opacity: 0; transform: scale(1.1); filter: blur(10px); pointer-events: none; }
+        
+        .splash-logo-container { position: relative; display: flex; justify-content: center; align-items: center; }
+        
+        .splash-logo {
+            width: 120px; height: 120px; z-index: 2;
+            animation: logoBeat 2.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        
+        @keyframes logoBeat {
+            0% { transform: scale(0.3) rotate(-15deg); opacity: 0; }
+            20% { transform: scale(1.1) rotate(5deg); opacity: 1; }
+            40% { transform: scale(0.95) rotate(-2deg); }
+            60% { transform: scale(1.05) rotate(1deg); }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        /* Ondas sonoras */
+        .splash-wave {
+            position: absolute; width: 110px; height: 110px;
+            border: 3px solid var(--accent); border-radius: 35px;
+            opacity: 0; z-index: 1;
+        }
+        .wave-1 { animation: wavePulse 1.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards; }
+        .wave-2 { animation: wavePulse 1.8s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards; }
+        .wave-3 { animation: wavePulse 1.8s cubic-bezier(0.16, 1, 0.3, 1) 0.8s forwards; }
+
+        @keyframes wavePulse {
+            0% { transform: scale(1) rotate(0deg); opacity: 0.8; }
+            100% { transform: scale(2.8) rotate(45deg); opacity: 0; border-width: 0px; }
+        }
+
+        /* --- APP CONTAINER --- */
         .app-container { width: 100%; max-width: 850px; height: 100%; position: relative; display: flex; flex-direction: column; overflow: hidden; }
 
         .ambient-blur {
@@ -80,7 +120,6 @@
 
         svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
-        /* CABECERA (Ajustada para Notch de iOS/Android) */
         .header { padding: env(safe-area-inset-top, 35px) 20px 10px 20px; display: flex; justify-content: space-between; align-items: flex-end; z-index: 10; position: relative; }
         .header h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px;}
         .header h1 svg { width: 24px; height: 24px; stroke: var(--accent); stroke-width: 2.5; }
@@ -197,7 +236,6 @@
         .control-btn.primary:active { transform: scale(0.9); border-color: var(--accent); }
         .control-btn.primary::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: conic-gradient(from 0deg, transparent 0%, var(--accent) 50%, transparent 100%); opacity: 0; transition: opacity 0.4s; pointer-events: none; z-index: 1; }
         .control-btn.primary.playing::before { opacity: 1; animation: rotateLiquid 3s linear infinite; }
-        @keyframes rotateLiquid { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .control-btn.primary::after { content: ''; position: absolute; top: 2px; left: 2px; right: 2px; bottom: 2px; background: var(--glass-bg); backdrop-filter: blur(20px); border-radius: 50%; z-index: 2; }
         .control-btn.primary svg { width: 36px; height: 36px; fill: currentColor; stroke: none; margin-left: 4px; z-index: 3; position: relative; transition: margin 0.2s;}
         .control-btn.primary.playing svg { margin-left: 0; }
@@ -236,10 +274,8 @@
         @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
     </style>
 
-    <!-- === GENERADOR AUTOMÁTICO DE LOGO PWA EN ALTA RESOLUCIÓN === -->
     <script>
         (function() {
-            // El SVG oficial del logo LYNOR de cristal
             const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
                 <defs>
                     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -247,57 +283,47 @@
                         <stop offset="50%" stop-color="#7b96ec"/>
                         <stop offset="100%" stop-color="#af52de"/>
                     </linearGradient>
-                    <filter id="shadow">
-                        <feDropShadow dx="0" dy="12" stdDeviation="15" flood-color="#000000" flood-opacity="0.3"/>
-                    </filter>
-                    <filter id="glass">
-                        <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.2"/>
-                    </filter>
+                    <filter id="shadow"><feDropShadow dx="0" dy="12" stdDeviation="15" flood-color="#000000" flood-opacity="0.3"/></filter>
+                    <filter id="glass"><feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.2"/></filter>
                 </defs>
                 <rect width="512" height="512" rx="115" fill="url(#bg)"/>
                 <circle cx="256" cy="256" r="140" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.7)" stroke-width="8" filter="url(#shadow)"/>
                 <path d="M210 170 L340 256 L210 342 Z" fill="#ffffff" filter="url(#glass)"/>
             </svg>`;
-
-            // Codificar el SVG para inyectarlo en el HTML sin crear archivos extra
             const encodedSvg = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgIcon)));
 
-            // 1. Inyectar Logo para iOS (Apple Touch Icon)
-            const appleIcon = document.createElement('link');
-            appleIcon.rel = 'apple-touch-icon';
-            appleIcon.href = encodedSvg;
-            document.head.appendChild(appleIcon);
+            const appleIcon = document.createElement('link'); appleIcon.rel = 'apple-touch-icon'; appleIcon.href = encodedSvg; document.head.appendChild(appleIcon);
+            const favicon = document.createElement('link'); favicon.rel = 'icon'; favicon.href = encodedSvg; document.head.appendChild(favicon);
 
-            // 2. Inyectar Favicon General
-            const favicon = document.createElement('link');
-            favicon.rel = 'icon';
-            favicon.href = encodedSvg;
-            document.head.appendChild(favicon);
-
-            // 3. Crear Web Manifest para Android/Chrome PWA
-            const manifest = {
-                name: "LYNOR Music",
-                short_name: "LYNOR",
-                start_url: window.location.href,
-                display: "standalone",
-                background_color: "#000000",
-                theme_color: "#7b96ec",
-                icons: [{
-                    src: encodedSvg,
-                    sizes: "512x512",
-                    type: "image/svg+xml",
-                    purpose: "any maskable"
-                }]
-            };
-            
-            const manifestLink = document.createElement('link');
-            manifestLink.rel = 'manifest';
-            manifestLink.href = "data:application/manifest+json;base64," + btoa(unescape(encodeURIComponent(JSON.stringify(manifest))));
-            document.head.appendChild(manifestLink);
+            const manifest = { name: "LYNOR Music", short_name: "LYNOR", start_url: window.location.href, display: "standalone", background_color: "#000000", theme_color: "#7b96ec", icons: [{ src: encodedSvg, sizes: "512x512", type: "image/svg+xml", purpose: "any maskable" }] };
+            const manifestLink = document.createElement('link'); manifestLink.rel = 'manifest'; manifestLink.href = "data:application/manifest+json;base64," + btoa(unescape(encodeURIComponent(JSON.stringify(manifest)))); document.head.appendChild(manifestLink);
         })();
     </script>
 </head>
 <body>
+
+    <!-- SPLASH SCREEN INICIAL -->
+    <div class="splash-screen" id="splash-screen">
+        <div class="splash-logo-container">
+            <div class="splash-wave wave-1"></div>
+            <div class="splash-wave wave-2"></div>
+            <div class="splash-wave wave-3"></div>
+            <svg class="splash-logo" viewBox="0 0 512 512">
+                <defs>
+                    <linearGradient id="splashBg" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#64d2ff"/>
+                        <stop offset="50%" stop-color="#7b96ec"/>
+                        <stop offset="100%" stop-color="#af52de"/>
+                    </linearGradient>
+                    <filter id="splashShadow"><feDropShadow dx="0" dy="12" stdDeviation="15" flood-color="#000000" flood-opacity="0.3"/></filter>
+                    <filter id="splashGlass"><feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.2"/></filter>
+                </defs>
+                <rect width="512" height="512" rx="115" fill="url(#splashBg)"/>
+                <circle cx="256" cy="256" r="140" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.7)" stroke-width="8" filter="url(#splashShadow)"/>
+                <path d="M210 170 L340 256 L210 342 Z" fill="#ffffff" filter="url(#splashGlass)"/>
+            </svg>
+        </div>
+    </div>
 
     <div class="ambient-blur"></div>
     <audio id="main-audio"></audio>
@@ -402,6 +428,15 @@
 
     <script>
         const requestAF = window.requestAnimationFrame;
+
+        // === CONTROL DEL SPLASH SCREEN ===
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const splash = document.getElementById('splash-screen');
+                splash.classList.add('hide');
+                setTimeout(() => splash.remove(), 600); // Liberar RAM después de ocultar
+            }, 2200); 
+        });
         
         const toggleInput = document.getElementById('dark-mode-toggle');
         const currentTheme = localStorage.getItem('lynor_theme') || 'light';

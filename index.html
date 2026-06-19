@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>LYNOR Music</title>
+    
+    <!-- === ETIQUETAS PWA PARA PANTALLA COMPLETA NATIVA === -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="LYNOR">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#f4f6f9" media="(prefers-color-scheme: light)">
+
+    <style>
+        :root {
+            --bg-base: #f4f6f9;
+            --surface: rgba(255, 255, 255, 0.4);
+            --text-main: #1c1c1e;
+            --text-muted: #8a8a8f;
+            --accent: #7b96ec; 
+            --accent-glow: rgba(123, 150, 236, 0.5);
+            --danger: #ff453a;
+            
+            --glass-bg: rgba(255, 255, 255, 0.5);
+            --glass-strong: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --glass-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+            
+            --separator: rgba(0, 0, 0, 0.06);
+            --ambient-1: rgba(232, 230, 255, 0.9);
+            --ambient-2: rgba(255, 229, 236, 0.9);
+            --ambient-3: rgba(225, 240, 255, 0.8);
+            
+            --ios-spring: cubic-bezier(0.32, 0.72, 0, 1);
+            --ios-bounce: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        [data-theme="dark"] {
+            --bg-base: #000000;
+            --surface: rgba(20, 20, 25, 0.4);
+            --text-main: #ffffff;
+            --text-muted: #98989f;
+            --accent: #64d2ff;
+            --accent-glow: rgba(100, 210, 255, 0.5);
+            
+            --glass-bg: rgba(20, 20, 25, 0.45);
+            --glass-strong: rgba(20, 20, 25, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            
+            --separator: rgba(255, 255, 255, 0.08);
+            --ambient-1: rgba(15, 15, 40, 0.95);
+            --ambient-2: rgba(40, 15, 40, 0.95);
+            --ambient-3: rgba(10, 30, 45, 0.9);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-base); color: var(--text-main);
+            height: 100vh; overflow: hidden; display: flex; justify-content: center;
+            user-select: none; -webkit-user-select: none;
+            transition: background-color 0.4s ease, color 0.4s ease;
+        }
+
+        .app-container { width: 100%; max-width: 850px; height: 100%; position: relative; display: flex; flex-direction: column; overflow: hidden; }
+
+        .ambient-blur {
+            position: fixed; top: -20%; left: -20%; width: 140%; height: 140%; z-index: 0; pointer-events: none;
+            background: radial-gradient(circle at 20% 30%, var(--ambient-1) 0%, transparent 60%), radial-gradient(circle at 80% 80%, var(--ambient-2) 0%, transparent 60%), radial-gradient(circle at 50% 50%, var(--ambient-3) 0%, transparent 60%);
+            background-size: 200% 200%; filter: blur(40px);
+            animation: liquidBackground 18s ease-in-out infinite alternate; transition: background 0.6s ease;
+        }
+        @keyframes liquidBackground { 0% { background-position: 0% 0%; transform: scale(1); } 100% { background-position: 100% 100%; transform: scale(1.05); } }
+
+        .liquid-glass { background: var(--glass-bg); backdrop-filter: blur(40px) saturate(200%); -webkit-backdrop-filter: blur(40px) saturate(200%); border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow); }
+
+        svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+        /* CABECERA (Ajustada para Notch de iOS/Android) */
+        .header { padding: env(safe-area-inset-top, 35px) 20px 10px 20px; display: flex; justify-content: space-between; align-items: flex-end; z-index: 10; position: relative; }
+        .header h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px;}
+        .header h1 svg { width: 24px; height: 24px; stroke: var(--accent); stroke-width: 2.5; }
+        .header-actions { display: flex; gap: 14px; align-items: center; pointer-events: auto; }
+        .icon-btn { background: none; border: none; cursor: pointer; color: var(--text-main); transition: transform 0.3s var(--ios-bounce); }
+        .icon-btn:active { transform: scale(0.8); color: var(--text-muted); }
+
+        .search-container { padding: 0 20px; z-index: 10; transition: all 0.4s var(--ios-spring); height: 44px; margin-bottom: 5px; position: relative; }
+        .search-bar { 
+            width: 100%; padding: 10px 16px 10px 40px; border-radius: 16px; 
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%238a8a8f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>');
+            background-repeat: no-repeat; background-position: 12px center; background-size: 18px; 
+            color: var(--text-main); font-size: 15px; outline: none; pointer-events: auto; 
+            transition: transform 0.3s var(--ios-bounce), box-shadow 0.3s ease; 
+        }
+        .search-bar:focus { box-shadow: 0 8px 25px var(--accent-glow); transform: translateY(-2px); border-color: var(--accent); }
+        .search-bar::placeholder { color: var(--text-muted); }
+
+        .view-container { 
+            position: absolute; top: calc(env(safe-area-inset-top, 35px) + 65px); bottom: 0; width: 100%; padding: 0; overflow-y: auto; 
+            opacity: 0; pointer-events: none; transform: scale(0.96) translateY(20px); 
+            transition: opacity 0.4s ease, transform 0.5s var(--ios-spring); z-index: 5; -webkit-overflow-scrolling: touch; 
+            will-change: transform, opacity;
+        }
+        .view-container.active { opacity: 1; pointer-events: auto; transform: scale(1) translateY(0); }
+
+        .track-list { display: flex; flex-direction: column; padding: 0 20px 180px 20px; } 
+        .section-title { font-size: 20px; font-weight: 800; margin: 10px 20px 16px 20px; color: var(--text-main); }
+
+        .track-row { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--separator); cursor: pointer; pointer-events: auto; transition: background 0.2s, padding-left 0.3s var(--ios-spring); }
+        .track-row:active { background: var(--surface); border-radius: 12px; padding-left: 10px; border-bottom-color: transparent;}
+        .track-img { width: 50px; height: 50px; border-radius: 12px; object-fit: cover; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .track-info { flex-grow: 1; overflow: hidden; }
+        .track-title { font-size: 15.5px; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
+        .track-artist { font-size: 13.5px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .play-indicator { color: var(--text-muted); transition: color 0.3s; }
+        .track-row:hover .play-indicator { color: var(--accent); }
+
+        /* MINI-REPRODUCTOR */
+        .mini-player {
+            position: absolute; bottom: calc(env(safe-area-inset-bottom, 15px) + 80px); left: 20px; right: 20px; height: 66px; border-radius: 20px; display: flex; align-items: center; padding: 8px 16px 8px 8px; gap: 12px;
+            z-index: 90; opacity: 0; pointer-events: none; transform: translateY(150%); transition: all 0.5s var(--ios-spring); cursor: pointer; will-change: transform;
+        }
+        .mini-player.active { opacity: 1; pointer-events: auto; transform: translateY(0); }
+        .mini-player:active { transform: scale(0.96); }
+        .mini-art-container { position: relative; width: 50px; height: 50px; }
+        .mini-art { width: 100%; height: 100%; border-radius: 12px; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        
+        .visualizer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 3px; opacity: 0; transition: opacity 0.3s; }
+        .visualizer .bar { width: 4px; background: white; border-radius: 2px; transition: height 0.1s ease; height: 4px; }
+        .mini-player.playing .visualizer { opacity: 1; }
+        .mini-player.playing .visualizer .bar:nth-child(1) { animation: bounceBar 0.8s infinite alternate; }
+        .mini-player.playing .visualizer .bar:nth-child(2) { animation: bounceBar 0.5s infinite alternate; animation-delay: 0.2s;}
+        .mini-player.playing .visualizer .bar:nth-child(3) { animation: bounceBar 0.7s infinite alternate; animation-delay: 0.4s;}
+        @keyframes bounceBar { 0% { height: 4px; } 100% { height: 24px; } }
+
+        .mini-info { flex-grow: 1; overflow: hidden; }
+        .mini-title { font-size: 15px; font-weight: 700; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px;}
+        .mini-artist { font-size: 13px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600;}
+        .mini-controls { display: flex; align-items: center; gap: 14px; }
+        .mini-btn { background: none; border: none; color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.2s var(--ios-bounce); }
+        .mini-btn:active { transform: scale(0.8); }
+        .mini-btn svg { width: 28px; height: 28px; fill: currentColor; stroke: none; }
+
+        /* REPRODUCTOR PANTALLA COMPLETA */
+        .full-player-modal {
+            position: absolute; top: 100%; left: 0; width: 100%; height: 100%; z-index: 200; display: flex; flex-direction: column; align-items: center; padding: env(safe-area-inset-top, 20px) 24px 20px 24px;
+            transition: top 0.6s var(--ios-spring); overflow-y: auto; overflow-x: hidden;
+            background: var(--glass-strong); backdrop-filter: blur(80px) saturate(250%); -webkit-backdrop-filter: blur(80px) saturate(250%); will-change: top;
+        }
+        .full-player-modal.active { top: 0; }
+
+        .player-header { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; margin-top: 20px; }
+        .down-btn { background: var(--surface); border: 1px solid var(--glass-border); width: 38px; height: 38px; border-radius: 19px; color: var(--text-main); display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(10px); transition: transform 0.2s var(--ios-bounce); }
+        .down-btn:active { transform: scale(0.85); }
+        .down-btn svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2.5;}
+        
+        .fav-btn-player { background: none; border: none; cursor: pointer; color: var(--text-main); transition: transform 0.2s var(--ios-bounce); }
+        .fav-btn-player:active { transform: scale(0.8); }
+        .fav-btn-player.active { color: var(--danger); }
+        .fav-btn-player.active svg { fill: var(--danger); stroke: var(--danger); }
+
+        .album-art-wrapper { position: relative; width: 100%; max-width: 360px; aspect-ratio: 1/1; border-radius: 28px; margin-bottom: 40px; transition: transform 0.6s var(--ios-spring); transform-style: preserve-3d; perspective: 1000px; }
+        .album-art-wrapper.playing { transform: scale(1.05); }
+        .album-art-shadow { position: absolute; top: 10%; left: 5%; width: 90%; height: 90%; filter: blur(35px); opacity: 0.8; z-index: -1; border-radius: 28px; transition: opacity 0.5s; will-change: opacity; }
+        .album-art-large { width: 100%; height: 100%; object-fit: cover; border-radius: 28px; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2), 0 20px 50px rgba(0,0,0,0.3); pointer-events: none; }
+
+        .player-info { width: 100%; max-width: 400px; display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 30px; }
+        .player-title { font-size: 26px; font-weight: 800; color: var(--text-main); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+        .player-artist { font-size: 18px; color: var(--accent); font-weight: 600; opacity: 0.9; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .progress-container { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 10px; margin-bottom: 30px; }
+        .progress-bar-bg { width: 100%; height: 6px; background: var(--separator); border-radius: 6px; overflow: hidden; position: relative; }
+        .progress-bar-fill { height: 100%; background: var(--accent); width: 100%; transform: scaleX(0); transform-origin: left; border-radius: 6px; transition: transform 0.1s linear; will-change: transform; }
+        .time-info { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); font-weight: 700; }
+
+        .controls { display: flex; justify-content: space-between; align-items: center; pointer-events: auto; width: 100%; max-width: 400px; padding: 0 10px; }
+        .control-btn { background: none; border: none; cursor: pointer; color: var(--text-main); transition: transform 0.2s var(--ios-bounce), color 0.2s; }
+        .control-btn:active { transform: scale(0.85); color: var(--text-muted); }
+        .control-btn.secondary svg { width: 34px; height: 34px; fill: currentColor; stroke: none; }
+        
+        .aux-btn { color: var(--text-muted); padding: 10px; border-radius: 50%; }
+        .aux-btn.active { color: var(--accent); background: rgba(123, 150, 236, 0.15); }
+        .aux-btn svg { width: 22px; height: 22px; stroke: currentColor; stroke-width: 2.5; }
+
+        .control-btn.primary { 
+            width: 84px; height: 84px; border-radius: 50%; 
+            background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(25px) saturate(180%); -webkit-backdrop-filter: blur(25px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.4); color: var(--text-main); 
+            display: flex; justify-content: center; align-items: center; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15); transition: all 0.4s var(--ios-bounce); position: relative; overflow: hidden;
+        }
+        [data-theme="dark"] .control-btn.primary { background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.15); }
+        .control-btn.primary:active { transform: scale(0.9); border-color: var(--accent); }
+        .control-btn.primary::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: conic-gradient(from 0deg, transparent 0%, var(--accent) 50%, transparent 100%); opacity: 0; transition: opacity 0.4s; pointer-events: none; z-index: 1; }
+        .control-btn.primary.playing::before { opacity: 1; animation: rotateLiquid 3s linear infinite; }
+        @keyframes rotateLiquid { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .control-btn.primary::after { content: ''; position: absolute; top: 2px; left: 2px; right: 2px; bottom: 2px; background: var(--glass-bg); backdrop-filter: blur(20px); border-radius: 50%; z-index: 2; }
+        .control-btn.primary svg { width: 36px; height: 36px; fill: currentColor; stroke: none; margin-left: 4px; z-index: 3; position: relative; transition: margin 0.2s;}
+        .control-btn.primary.playing svg { margin-left: 0; }
+
+        /* AJUSTES */
+        .settings-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(5px); z-index: 300; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; display: flex; justify-content: center; }
+        .settings-overlay.active { opacity: 1; pointer-events: auto; }
+        .settings-panel { position: absolute; bottom: -100%; width: 100%; max-width: 850px; border-radius: 32px 32px 0 0; border-top: 1px solid var(--glass-border); padding: 24px 24px env(safe-area-inset-bottom, 35px) 24px; transition: bottom 0.5s var(--ios-spring); box-shadow: 0 -10px 40px rgba(0,0,0,0.2); }
+        .settings-overlay.active .settings-panel { bottom: 0; }
+        .settings-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .settings-title { font-size: 20px; font-weight: 800; color: var(--text-main); }
+        .close-settings { background: var(--surface); border: 1px solid var(--glass-border); width: 30px; height: 30px; border-radius: 15px; color: var(--text-main); cursor: pointer; display: flex; justify-content: center; align-items: center; transition: transform 0.2s; }
+        .close-settings:active { transform: scale(0.85); }
+        .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background: rgba(0,0,0,0.05); border-radius: 16px; border: 1px solid var(--glass-border);}
+        [data-theme="dark"] .setting-row { background: rgba(255,255,255,0.05); }
+        .setting-label { font-size: 16px; font-weight: 600; color: var(--text-main); display: flex; align-items: center; gap: 10px; }
+        .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--separator); transition: .4s; border-radius: 30px; }
+        .slider:before { position: absolute; content: ""; height: 22px; width: 22px; left: 3px; bottom: 3px; background-color: white; transition: .4s var(--ios-spring); border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        input:checked + .slider { background: var(--accent); }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        /* DOCK FÍSICO */
+        .tab-bar-container { position: fixed; bottom: env(safe-area-inset-bottom, 15px); left: 50%; transform: translateX(-50%); width: 256px; height: 70px; display: flex; align-items: center; padding: 5px; border-radius: 38px; z-index: 100; touch-action: none; transition: background 0.4s, border-color 0.4s; }
+        .liquid-indicator { position: absolute; top: 5px; left: 5px; width: 82px; height: 60px; border-radius: 33px; background: var(--separator); border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.3), inset 0 -2px 8px rgba(0, 0, 0, 0.05); z-index: 1; cursor: grab; transform-origin: center center; will-change: transform; transition: background 0.4s; }
+        .liquid-indicator:active { cursor: grabbing; }
+        .rainbow-trail { position: absolute; bottom: -4px; left: 12%; width: 76%; height: 12px; background: var(--accent); filter: blur(8px); border-radius: 50%; z-index: -1; transform-origin: center center; will-change: transform; opacity: 0.8; }
+        .liquid-indicator::after { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 33px; background: radial-gradient(circle at center 12%, rgba(255,255,255,0.2) 0%, transparent 60%); pointer-events: none; }
+        .tab-item { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 82px; height: 60px; color: var(--text-muted); position: relative; z-index: 2; pointer-events: none; }
+        .tab-icon { margin-bottom: 2px; will-change: transform; transform-origin: center bottom; display: flex; align-items: center; justify-content: center; }
+        .tab-label { font-size: 10px; font-weight: 700; letter-spacing: 0.2px; text-transform: uppercase;}
+
+        ::-webkit-scrollbar { width: 0px; }
+        .loader { text-align: center; color: var(--text-muted); padding: 20px; font-size: 14px; font-weight: 600; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+    </style>
+
+    <!-- === GENERADOR AUTOMÁTICO DE LOGO PWA EN ALTA RESOLUCIÓN === -->
+    <script>
+        (function() {
+            // El SVG oficial del logo LYNOR de cristal
+            const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+                <defs>
+                    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#64d2ff"/>
+                        <stop offset="50%" stop-color="#7b96ec"/>
+                        <stop offset="100%" stop-color="#af52de"/>
+                    </linearGradient>
+                    <filter id="shadow">
+                        <feDropShadow dx="0" dy="12" stdDeviation="15" flood-color="#000000" flood-opacity="0.3"/>
+                    </filter>
+                    <filter id="glass">
+                        <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.2"/>
+                    </filter>
+                </defs>
+                <rect width="512" height="512" rx="115" fill="url(#bg)"/>
+                <circle cx="256" cy="256" r="140" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.7)" stroke-width="8" filter="url(#shadow)"/>
+                <path d="M210 170 L340 256 L210 342 Z" fill="#ffffff" filter="url(#glass)"/>
+            </svg>`;
+
+            // Codificar el SVG para inyectarlo en el HTML sin crear archivos extra
+            const encodedSvg = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgIcon)));
+
+            // 1. Inyectar Logo para iOS (Apple Touch Icon)
+            const appleIcon = document.createElement('link');
+            appleIcon.rel = 'apple-touch-icon';
+            appleIcon.href = encodedSvg;
+            document.head.appendChild(appleIcon);
+
+            // 2. Inyectar Favicon General
+            const favicon = document.createElement('link');
+            favicon.rel = 'icon';
+            favicon.href = encodedSvg;
+            document.head.appendChild(favicon);
+
+            // 3. Crear Web Manifest para Android/Chrome PWA
+            const manifest = {
+                name: "LYNOR Music",
+                short_name: "LYNOR",
+                start_url: window.location.href,
+                display: "standalone",
+                background_color: "#000000",
+                theme_color: "#7b96ec",
+                icons: [{
+                    src: encodedSvg,
+                    sizes: "512x512",
+                    type: "image/svg+xml",
+                    purpose: "any maskable"
+                }]
+            };
+            
+            const manifestLink = document.createElement('link');
+            manifestLink.rel = 'manifest';
+            manifestLink.href = "data:application/manifest+json;base64," + btoa(unescape(encodeURIComponent(JSON.stringify(manifest))));
+            document.head.appendChild(manifestLink);
+        })();
+    </script>
+</head>
+<body>
+
+    <div class="ambient-blur"></div>
+    <audio id="main-audio"></audio>
+
+    <div class="app-container">
+        
+        <header class="header">
+            <h1 id="dynamic-title"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg> Inicio</h1>
+            <div class="header-actions">
+                <button class="icon-btn" onclick="toggleSettings()">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                </button>
+            </div>
+        </header>
+
+        <div class="search-container liquid-glass" id="search-box" style="opacity: 0; height: 0px; pointer-events: none; border-radius: 16px;">
+            <input type="text" id="search-input" class="search-bar" placeholder="Busca tu música favorita..." autocomplete="off">
+        </div>
+
+        <main id="view-0" class="view-container active">
+            <h2 class="section-title">Éxitos Globales</h2>
+            <div id="explore-results" class="track-list"></div>
+        </main>
+
+        <main id="view-1" class="view-container" style="top: 140px;">
+            <div id="search-results" class="track-list">
+                <div class="loader" style="animation:none;">Escribe algo para buscar en iTunes...</div>
+            </div>
+        </main>
+
+        <main id="view-2" class="view-container">
+            <h2 class="section-title">Canciones Guardadas</h2>
+            <div id="favorites-list" class="track-list"></div>
+        </main>
+
+        <div class="mini-player liquid-glass" id="mini-player" onclick="toggleFullPlayer(true)">
+            <div class="mini-art-container">
+                <img id="mini-art" class="mini-art" src="https://via.placeholder.com/100" alt="">
+                <div class="visualizer"><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+            </div>
+            <div class="mini-info">
+                <div class="mini-title" id="mini-title">Selecciona una pista</div>
+                <div class="mini-artist" id="mini-artist">Para comenzar</div>
+            </div>
+            <div class="mini-controls">
+                <button class="mini-btn" onclick="event.stopPropagation(); togglePlay()" id="mini-play-btn"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></button>
+                <button class="mini-btn" onclick="event.stopPropagation(); playNext()"><svg viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2"></line></svg></button>
+            </div>
+        </div>
+
+        <div class="full-player-modal" id="full-player-modal">
+            <div class="player-header">
+                <button class="down-btn" onclick="toggleFullPlayer(false)"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+                <button class="fav-btn-player" id="modal-fav-btn" onclick="toggleFavorite()"><svg viewBox="0 0 24 24" width="28" height="28"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg></button>
+            </div>
+
+            <div class="album-art-wrapper" id="player-art-wrapper">
+                <img id="player-art-shadow" class="album-art-shadow" src="https://via.placeholder.com/600" alt="">
+                <img id="player-art" class="album-art-large" src="https://via.placeholder.com/600" alt="Album Art">
+            </div>
+
+            <div class="player-info">
+                <div class="player-title" id="player-title">Listo para sonar</div>
+                <div class="player-artist" id="player-artist">Busca una canción</div>
+            </div>
+
+            <div class="progress-container">
+                <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-fill"></div></div>
+                <div class="time-info"><span id="time-current">0:00</span><span id="time-total">0:30</span></div>
+            </div>
+
+            <div class="controls">
+                <button class="control-btn aux-btn" id="shuffle-btn" onclick="toggleShuffle()"><svg viewBox="0 0 24 24"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg></button>
+                <button class="control-btn secondary" onclick="playPrevious()"><svg viewBox="0 0 24 24"><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="2"></line></svg></button>
+                <button class="control-btn primary" onclick="togglePlay()" id="play-pause-btn"><svg viewBox="0 0 24 24" id="play-icon"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg></button>
+                <button class="control-btn secondary" onclick="playNext()"><svg viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2"></line></svg></button>
+                <button class="control-btn aux-btn" id="repeat-btn" onclick="toggleRepeat()"><svg viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg></button>
+            </div>
+        </div>
+
+        <div class="settings-overlay" id="settings-overlay">
+            <div class="settings-panel liquid-glass">
+                <div class="settings-header">
+                    <h3 class="settings-title">Configuración</h3>
+                    <button class="close-settings" onclick="toggleSettings()"><svg viewBox="0 0 24 24" width="18" height="18"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                </div>
+                <div class="setting-row">
+                    <div class="setting-label"><svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg> Modo Oscuro</div>
+                    <label class="switch"><input type="checkbox" id="dark-mode-toggle" onchange="switchTheme(this.checked)"><span class="slider"></span></label>
+                </div>
+            </div>
+        </div>
+
+        <nav class="tab-bar-container liquid-glass" id="tabBar">
+            <div class="liquid-indicator" id="liquid"><div class="rainbow-trail" id="rainbow"></div></div>
+            <div class="tab-item"><div class="tab-icon"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg></div><span class="tab-label">Inicio</span></div>
+            <div class="tab-item"><div class="tab-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></div><span class="tab-label">Buscar</span></div>
+            <div class="tab-item"><div class="tab-icon"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg></div><span class="tab-label">Biblioteca</span></div>
+        </nav>
+
+    </div> 
+
+    <script>
+        const requestAF = window.requestAnimationFrame;
+        
+        const toggleInput = document.getElementById('dark-mode-toggle');
+        const currentTheme = localStorage.getItem('lynor_theme') || 'light';
+        if (currentTheme === 'dark') { document.body.setAttribute('data-theme', 'dark'); toggleInput.checked = true; }
+        function switchTheme(isDark) { if (isDark) { document.body.setAttribute('data-theme', 'dark'); localStorage.setItem('lynor_theme', 'dark'); } else { document.body.removeAttribute('data-theme'); localStorage.setItem('lynor_theme', 'light'); } }
+        function toggleSettings() { document.getElementById('settings-overlay').classList.toggle('active'); }
+
+        const audio = document.getElementById('main-audio');
+        const searchInput = document.getElementById('search-input');
+        const searchResultsEl = document.getElementById('search-results');
+        const exploreResultsEl = document.getElementById('explore-results');
+        const favoritesListEl = document.getElementById('favorites-list');
+        
+        const playPauseBtn = document.getElementById('play-pause-btn');
+        const progressFill = document.getElementById('progress-fill');
+        const timeCurrent = document.getElementById('time-current');
+        const playerArtWrapper = document.getElementById('player-art-wrapper');
+        const playerArt = document.getElementById('player-art');
+        const playerArtShadow = document.getElementById('player-art-shadow');
+        const playerTitle = document.getElementById('player-title');
+        const playerArtist = document.getElementById('player-artist');
+        const modalFavBtn = document.getElementById('modal-fav-btn');
+
+        const miniPlayer = document.getElementById('mini-player');
+        const miniArt = document.getElementById('mini-art');
+        const miniTitle = document.getElementById('mini-title');
+        const miniArtist = document.getElementById('mini-artist');
+        const miniPlayBtn = document.getElementById('mini-play-btn');
+        const fullPlayerModal = document.getElementById('full-player-modal');
+
+        const shuffleBtn = document.getElementById('shuffle-btn');
+        const repeatBtn = document.getElementById('repeat-btn');
+
+        let currentQueue = [];
+        let currentTrackIndex = -1;
+        let isPlaying = false;
+        let isShuffle = false;
+        let isRepeat = false;
+        let favorites = JSON.parse(localStorage.getItem('lynor_music_favs_v2')) || [];
+
+        function updateMediaSession(track) {
+            if ('mediaSession' in navigator) {
+                const highResArt = track.artworkUrl100 ? track.artworkUrl100.replace('100x100bb', '600x600bb') : 'https://via.placeholder.com/600';
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: track.trackName,
+                    artist: track.artistName,
+                    album: track.collectionName || 'LYNOR Music',
+                    artwork: [{ src: highResArt, sizes: '512x512', type: 'image/jpeg' }]
+                });
+
+                navigator.mediaSession.setActionHandler('play', togglePlay);
+                navigator.mediaSession.setActionHandler('pause', togglePlay);
+                navigator.mediaSession.setActionHandler('previoustrack', playPrevious);
+                navigator.mediaSession.setActionHandler('nexttrack', playNext);
+            }
+        }
+
+        async function fetchMusic(query, container) {
+            container.innerHTML = '<div class="loader">Buscando joyas musicales...</div>';
+            try {
+                const response = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=30`);
+                const data = await response.json();
+                const queue = data.results.filter(track => track.previewUrl);
+                if(queue.length === 0) { container.innerHTML = '<div class="loader" style="animation:none;">No se encontraron resultados.</div>'; return; }
+                renderTrackList(queue, container);
+            } catch (err) { container.innerHTML = '<div class="loader" style="animation:none; color: var(--danger);">Error de conexión.</div>'; }
+        }
+
+        function renderTrackList(tracks, container) {
+            container.innerHTML = '';
+            const fragment = document.createDocumentFragment();
+            tracks.forEach((track, index) => {
+                const art100 = track.artworkUrl100 ? track.artworkUrl100 : 'https://via.placeholder.com/100';
+                const card = document.createElement('div');
+                card.className = 'track-row'; 
+                card.style.animationDelay = `${index * 0.03}s`;
+                card.onclick = () => loadAndPlayTrack(tracks, index);
+                card.innerHTML = `
+                    <img src="${art100}" class="track-img" loading="lazy" alt="Cover">
+                    <div class="track-info">
+                        <div class="track-title">${track.trackName}</div>
+                        <div class="track-artist">${track.artistName}</div>
+                    </div>
+                    <div class="play-indicator"><svg viewBox="0 0 24 24" width="20" height="20"><polygon points="5 3 19 12 5 21 5 3" fill="currentColor"></polygon></svg></div>
+                `;
+                fragment.appendChild(card);
+            });
+            container.appendChild(fragment);
+        }
+
+        function toggleFullPlayer(show) {
+            if(show) fullPlayerModal.classList.add('active');
+            else fullPlayerModal.classList.remove('active');
+        }
+
+        function loadAndPlayTrack(queue, index) {
+            currentQueue = queue; currentTrackIndex = index;
+            const track = currentQueue[currentTrackIndex];
+            
+            playerTitle.innerText = track.trackName; playerArtist.innerText = track.artistName;
+            miniTitle.innerText = track.trackName; miniArtist.innerText = track.artistName;
+            
+            const art100 = track.artworkUrl100 ? track.artworkUrl100 : 'https://via.placeholder.com/100';
+            const highResArt = track.artworkUrl100 ? track.artworkUrl100.replace('100x100bb', '600x600bb') : 'https://via.placeholder.com/600';
+            miniArt.src = art100;
+            playerArt.src = highResArt; playerArtShadow.src = highResArt; 
+            
+            audio.src = track.previewUrl; audio.play();
+            miniPlayer.classList.add('active'); 
+            checkFavoriteStatus();
+            updateMediaSession(track);
+        }
+
+        function togglePlay() { if (!audio.src) return; if (audio.paused) audio.play(); else audio.pause(); }
+        
+        function toggleShuffle() { isShuffle = !isShuffle; shuffleBtn.classList.toggle('active', isShuffle); }
+        function toggleRepeat() { isRepeat = !isRepeat; repeatBtn.classList.toggle('active', isRepeat); }
+
+        function playNext() { 
+            if(currentQueue.length > 0) { 
+                let nextIndex = currentTrackIndex + 1; 
+                if (isShuffle) nextIndex = Math.floor(Math.random() * currentQueue.length);
+                else if(nextIndex >= currentQueue.length) nextIndex = 0; 
+                loadAndPlayTrack(currentQueue, nextIndex); 
+            } 
+        }
+        
+        function playPrevious() { 
+            if(currentQueue.length > 0) { 
+                let prevIndex = currentTrackIndex - 1; 
+                if(prevIndex < 0) prevIndex = currentQueue.length - 1; 
+                loadAndPlayTrack(currentQueue, prevIndex); 
+            } 
+        }
+
+        audio.addEventListener('play', () => {
+            isPlaying = true; 
+            playPauseBtn.classList.add('playing'); miniPlayer.classList.add('playing');
+            const pauseIcon = `<svg viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>`;
+            playPauseBtn.innerHTML = pauseIcon; miniPlayBtn.innerHTML = pauseIcon;
+            playerArtWrapper.classList.add('playing');
+        });
+
+        audio.addEventListener('pause', () => {
+            isPlaying = false; 
+            playPauseBtn.classList.remove('playing'); miniPlayer.classList.remove('playing');
+            const playIcon = `<svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`;
+            playPauseBtn.innerHTML = playIcon; miniPlayBtn.innerHTML = playIcon;
+            playerArtWrapper.classList.remove('playing');
+            playerArtWrapper.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale(1)';
+        });
+
+        audio.addEventListener('timeupdate', () => {
+            if (audio.duration) {
+                progressFill.style.transform = `scaleX(${audio.currentTime / audio.duration})`;
+                let currentSecs = Math.floor(audio.currentTime);
+                timeCurrent.innerText = `0:${currentSecs < 10 ? '0' : ''}${currentSecs}`;
+            }
+        });
+
+        audio.addEventListener('ended', () => { if (isRepeat) { audio.currentTime = 0; audio.play(); } else { playNext(); } });
+
+        fullPlayerModal.addEventListener('mousemove', (e) => {
+            if(!isPlaying) return;
+            const rect = playerArtWrapper.getBoundingClientRect();
+            const x = e.clientX - rect.left - rect.width/2;
+            const y = e.clientY - rect.top - rect.height/2;
+            const rotateX = -y / 15; const rotateY = x / 15;
+            requestAF(() => { playerArtWrapper.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.05)`; });
+        });
+        fullPlayerModal.addEventListener('mouseleave', () => {
+            if(isPlaying) playerArtWrapper.style.transform = `perspective(1000px) rotateX(0) rotateY(0) scale(1.05)`;
+        });
+
+        let searchTimeout;
+        searchInput.addEventListener('keyup', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => { const val = e.target.value.trim(); if(val.length > 1) fetchMusic(val, searchResultsEl); }, 400); 
+        });
+
+        function checkFavoriteStatus() {
+            if(currentTrackIndex === -1) return;
+            const trackId = currentQueue[currentTrackIndex].trackId;
+            if(favorites.some(t => t.trackId === trackId)) modalFavBtn.classList.add('active');
+            else modalFavBtn.classList.remove('active');
+        }
+
+        function toggleFavorite() {
+            if(currentTrackIndex === -1) return;
+            const track = currentQueue[currentTrackIndex];
+            const isFav = favorites.some(t => t.trackId === track.trackId);
+            if(isFav) { favorites = favorites.filter(t => t.trackId !== track.trackId); modalFavBtn.classList.remove('active'); } 
+            else { favorites.unshift(track); modalFavBtn.classList.add('active'); }
+            localStorage.setItem('lynor_music_favs_v2', JSON.stringify(favorites));
+            renderTrackList(favorites, favoritesListEl);
+        }
+
+        const tabBar = document.getElementById('tabBar');
+        const liquid = document.getElementById('liquid');
+        const rainbow = document.getElementById('rainbow');
+        const tabs = document.querySelectorAll('.tab-item');
+        
+        const tabWidth = 82, maxIndex = tabs.length - 1, maxTranslate = maxIndex * tabWidth;
+        let currentX = 0, targetX = 0, vx = 0;              
+        const stiffness = 0.24, damping = 0.60;    
+        let isDragging = false, dragPointerId = null, pointerStartX = 0, liquidStartX = 0, startTimestamp = 0;  
+
+        function switchAppView(index) {
+            document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
+            document.getElementById(`view-${index}`).classList.add('active');
+            
+            const viewTitles = ["Inicio", "Buscar", "Biblioteca"];
+            document.getElementById('dynamic-title').innerHTML = `${index === 0 ? '<svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>' : ''}${viewTitles[index]}`;
+
+            const searchBox = document.getElementById('search-box');
+            if(index === 1) { 
+                searchBox.style.opacity = "1"; searchBox.style.height = "44px"; searchBox.style.marginBottom = "5px"; searchBox.style.pointerEvents = "auto";
+                setTimeout(() => searchInput.focus(), 300); 
+            } else {
+                searchBox.style.opacity = "0"; searchBox.style.height = "0px"; searchBox.style.marginBottom = "0px"; searchBox.style.pointerEvents = "none";
+            }
+        }
+
+        function executeNavigation(index) { targetX = index * tabWidth; switchAppView(index); }
+
+        tabBar.addEventListener('pointerdown', (e) => { isDragging = true; dragPointerId = e.pointerId; tabBar.setPointerCapture(e.pointerId); pointerStartX = e.clientX; liquidStartX = currentX; startTimestamp = performance.now(); });
+        tabBar.addEventListener('pointermove', (e) => { if (!isDragging || e.pointerId !== dragPointerId) return; const deltaX = e.clientX - pointerStartX; let newX = liquidStartX + deltaX; if (newX < 0) newX = newX * 0.22; else if (newX > maxTranslate) newX = maxTranslate + (newX - maxTranslate) * 0.22; targetX = newX; });
+        tabBar.addEventListener('pointerup', (e) => { if (!isDragging || e.pointerId !== dragPointerId) return; isDragging = false; dragPointerId = null; const dragDuration = performance.now() - startTimestamp, dragDistance = Math.abs(e.clientX - pointerStartX); let finalTargetIndex = 0; if (dragDistance < 12 && dragDuration < 280) { const rect = tabBar.getBoundingClientRect(), clickXInsideBar = e.clientX - rect.left - 5; finalTargetIndex = Math.floor(clickXInsideBar / tabWidth); } else { finalTargetIndex = Math.round(currentX / tabWidth); } finalTargetIndex = Math.max(0, Math.min(maxIndex, finalTargetIndex)); executeNavigation(finalTargetIndex); });
+        tabBar.addEventListener('pointercancel', () => { isDragging = false; let currentTarget = Math.round(currentX / tabWidth); executeNavigation(Math.max(0, Math.min(maxIndex, currentTarget))); });
+
+        function updatePhysicsLoop() {
+            if (isDragging) { let dx = targetX - currentX; currentX += dx * 0.45; vx = dx * 0.45; } 
+            else { let dx = targetX - currentX, ax = dx * stiffness; vx += ax; vx *= damping; currentX += vx; }
+
+            let speed = Math.abs(vx), stretchX = 1 + Math.min(speed * 0.035, 0.35), squashY = 1 - Math.min(speed * 0.025, 0.18), tilt = vx * 0.35;                              
+            liquid.style.transform = `translateX(${currentX}px) scaleX(${stretchX}) scaleY(${squashY}) skewX(${tilt}deg)`;
+            let rainbowLag = -vx * 0.55, rainbowStretch = 1 + (speed * 0.015);
+            rainbow.style.transform = `translateX(${rainbowLag}px) scaleX(${rainbowStretch})`;
+
+            tabs.forEach((tab, index) => {
+                let tabPositionX = index * tabWidth, distance = Math.abs(currentX - tabPositionX), influence = Math.max(0, 1 - (distance / (tabWidth * 1.15)));
+                const isDark = document.body.getAttribute('data-theme') === 'dark';
+                let baseColor = isDark ? 152 : 138; let activeRGB = isDark ? [100, 210, 255] : [123, 150, 236]; 
+                let r = Math.round(baseColor + (activeRGB[0] - baseColor) * influence), g = Math.round(baseColor + (activeRGB[1] - baseColor) * influence), b = Math.round(baseColor + (activeRGB[2] - baseColor) * influence);
+                tab.style.color = `rgb(${r}, ${g}, ${b})`;
+                const icon = tab.querySelector('.tab-icon svg');
+                if(icon) { let iconScale = 1 + (influence * 0.22), iconY = -influence * 3.0; icon.style.transform = `translateY(${iconY}px) scale(${iconScale})`; }
+            });
+            requestAF(updatePhysicsLoop);
+        }
+
+        requestAF(updatePhysicsLoop);
+        renderTrackList(favorites, favoritesListEl);
+        fetchMusic("Top Pop Hits 2024", exploreResultsEl);
+
+    </script>
+</body>
+</html>

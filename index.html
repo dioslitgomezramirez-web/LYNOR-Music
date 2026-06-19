@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>LYNOR Music</title>
+    <title>LYNOR Music - Epic Splash Edition</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -65,44 +65,70 @@
             transition: background-color 0.4s ease, color 0.4s ease;
         }
 
-        /* --- SPLASH SCREEN --- */
+        /* --- SPLASH SCREEN ÉPICO 3D --- */
         .splash-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg-base); z-index: 9999;
-            display: flex; justify-content: center; align-items: center;
-            transition: opacity 0.6s var(--ios-spring), transform 0.6s var(--ios-spring), filter 0.6s ease;
-            will-change: transform, opacity, filter;
+            background: #000000; /* Fondo negro absoluto para mezclar con tu imagen */
+            z-index: 9999; display: flex; justify-content: center; align-items: center;
+            transition: opacity 0.8s var(--ios-spring), transform 0.8s var(--ios-spring);
+            perspective: 1000px;
         }
-        .splash-screen.hide { opacity: 0; transform: scale(1.1); filter: blur(10px); pointer-events: none; }
+        .splash-screen.hide { opacity: 0; transform: scale(1.2); pointer-events: none; }
         
-        .splash-logo-container { position: relative; display: flex; justify-content: center; align-items: center; }
+        .splash-logo-container { 
+            position: relative; width: 160px; height: 160px; 
+            display: flex; justify-content: center; align-items: center; 
+            transform-style: preserve-3d; 
+        }
         
         .splash-logo {
-            width: 120px; height: 120px; z-index: 2;
-            animation: logoBeat 2.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            position: absolute; width: 100%; height: 100%; border-radius: 40px; object-fit: cover;
+            box-shadow: 0 0 50px rgba(175, 82, 222, 0.5);
         }
         
-        @keyframes logoBeat {
-            0% { transform: scale(0.3) rotate(-15deg); opacity: 0; }
-            20% { transform: scale(1.1) rotate(5deg); opacity: 1; }
-            40% { transform: scale(0.95) rotate(-2deg); }
-            60% { transform: scale(1.05) rotate(1deg); }
-            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        /* Capa central */
+        .main-logo { animation: epicEntry 2.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; z-index: 3; }
+        
+        /* Capas de Aberración Cromática (Glitch) */
+        .glitch-layer { opacity: 0; mix-blend-mode: screen; z-index: 2; }
+        .layer-red { filter: drop-shadow(8px 0 0 rgba(255, 0, 0, 0.8)); animation: glitchRed 2.8s ease-in-out forwards; }
+        .layer-blue { filter: drop-shadow(-8px 0 0 rgba(0, 255, 255, 0.8)); animation: glitchBlue 2.8s ease-in-out forwards; }
+        
+        /* Anillos de choque neón */
+        .neon-ring {
+            position: absolute; width: 100%; height: 100%;
+            border: 4px solid transparent; border-radius: 40px;
+            box-shadow: 0 0 20px #64d2ff, inset 0 0 20px #af52de;
+            opacity: 0; z-index: 1; pointer-events: none;
         }
+        .ring-1 { animation: ringExplosion 2s cubic-bezier(0.1, 0.8, 0.3, 1) 0.5s forwards; }
+        .ring-2 { animation: ringExplosion 2.5s cubic-bezier(0.1, 0.8, 0.3, 1) 0.7s forwards; }
 
-        /* Ondas sonoras */
-        .splash-wave {
-            position: absolute; width: 110px; height: 110px;
-            border: 3px solid var(--accent); border-radius: 35px;
-            opacity: 0; z-index: 1;
+        @keyframes epicEntry {
+            0% { transform: translateZ(-800px) rotateY(-60deg) rotateX(30deg) scale(0); opacity: 0; filter: blur(20px); }
+            20% { transform: translateZ(100px) rotateY(15deg) rotateX(-10deg) scale(1.3); opacity: 1; filter: blur(0px); }
+            35% { transform: translateZ(0px) rotateY(0deg) rotateX(0deg) scale(0.9); box-shadow: 0 0 80px rgba(175, 82, 222, 0.8); }
+            60% { transform: scale(1.05); box-shadow: 0 0 30px rgba(100, 210, 255, 0.6); }
+            100% { transform: scale(1); box-shadow: 0 0 50px rgba(175, 82, 222, 0.5); opacity: 1; }
         }
-        .wave-1 { animation: wavePulse 1.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards; }
-        .wave-2 { animation: wavePulse 1.8s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards; }
-        .wave-3 { animation: wavePulse 1.8s cubic-bezier(0.16, 1, 0.3, 1) 0.8s forwards; }
-
-        @keyframes wavePulse {
-            0% { transform: scale(1) rotate(0deg); opacity: 0.8; }
-            100% { transform: scale(2.8) rotate(45deg); opacity: 0; border-width: 0px; }
+        
+        @keyframes glitchRed {
+            0%, 19% { opacity: 0; transform: translateX(0); }
+            20% { opacity: 0.9; transform: translateX(-20px) scale(1.2); }
+            25% { opacity: 0; transform: translateX(0) scale(1); }
+            100% { opacity: 0; }
+        }
+        
+        @keyframes glitchBlue {
+            0%, 19% { opacity: 0; transform: translateX(0); }
+            20% { opacity: 0.9; transform: translateX(20px) scale(1.2); }
+            25% { opacity: 0; transform: translateX(0) scale(1); }
+            100% { opacity: 0; }
+        }
+        
+        @keyframes ringExplosion {
+            0% { transform: scale(0.8); opacity: 1; border-width: 8px; border-color: #64d2ff; }
+            100% { transform: scale(3.5); opacity: 0; border-width: 0px; border-color: #af52de; }
         }
 
         /* --- APP CONTAINER --- */
@@ -236,6 +262,7 @@
         .control-btn.primary:active { transform: scale(0.9); border-color: var(--accent); }
         .control-btn.primary::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: conic-gradient(from 0deg, transparent 0%, var(--accent) 50%, transparent 100%); opacity: 0; transition: opacity 0.4s; pointer-events: none; z-index: 1; }
         .control-btn.primary.playing::before { opacity: 1; animation: rotateLiquid 3s linear infinite; }
+        @keyframes rotateLiquid { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .control-btn.primary::after { content: ''; position: absolute; top: 2px; left: 2px; right: 2px; bottom: 2px; background: var(--glass-bg); backdrop-filter: blur(20px); border-radius: 50%; z-index: 2; }
         .control-btn.primary svg { width: 36px; height: 36px; fill: currentColor; stroke: none; margin-left: 4px; z-index: 3; position: relative; transition: margin 0.2s;}
         .control-btn.primary.playing svg { margin-left: 0; }
@@ -274,54 +301,41 @@
         @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
     </style>
 
+    <!-- INYECTOR AUTOMÁTICO DE PWA Y LOGO -->
     <script>
         (function() {
-            const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-                <defs>
-                    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#64d2ff"/>
-                        <stop offset="50%" stop-color="#7b96ec"/>
-                        <stop offset="100%" stop-color="#af52de"/>
-                    </linearGradient>
-                    <filter id="shadow"><feDropShadow dx="0" dy="12" stdDeviation="15" flood-color="#000000" flood-opacity="0.3"/></filter>
-                    <filter id="glass"><feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.2"/></filter>
-                </defs>
-                <rect width="512" height="512" rx="115" fill="url(#bg)"/>
-                <circle cx="256" cy="256" r="140" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.7)" stroke-width="8" filter="url(#shadow)"/>
-                <path d="M210 170 L340 256 L210 342 Z" fill="#ffffff" filter="url(#glass)"/>
-            </svg>`;
-            const encodedSvg = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgIcon)));
+            // Se utiliza el archivo proporcionado como Logo oficial
+            const logoUrl = "WhatsApp Image 2026-06-19 at 6.10.40 PM.jpeg";
 
-            const appleIcon = document.createElement('link'); appleIcon.rel = 'apple-touch-icon'; appleIcon.href = encodedSvg; document.head.appendChild(appleIcon);
-            const favicon = document.createElement('link'); favicon.rel = 'icon'; favicon.href = encodedSvg; document.head.appendChild(favicon);
+            const appleIcon = document.createElement('link'); appleIcon.rel = 'apple-touch-icon'; appleIcon.href = logoUrl; document.head.appendChild(appleIcon);
+            const favicon = document.createElement('link'); favicon.rel = 'icon'; favicon.href = logoUrl; document.head.appendChild(favicon);
 
-            const manifest = { name: "LYNOR Music", short_name: "LYNOR", start_url: window.location.href, display: "standalone", background_color: "#000000", theme_color: "#7b96ec", icons: [{ src: encodedSvg, sizes: "512x512", type: "image/svg+xml", purpose: "any maskable" }] };
-            const manifestLink = document.createElement('link'); manifestLink.rel = 'manifest'; manifestLink.href = "data:application/manifest+json;base64," + btoa(unescape(encodeURIComponent(JSON.stringify(manifest)))); document.head.appendChild(manifestLink);
+            const manifest = { 
+                name: "LYNOR Music", short_name: "LYNOR", start_url: window.location.href, display: "standalone", 
+                background_color: "#000000", theme_color: "#7b96ec", 
+                icons: [{ src: logoUrl, sizes: "512x512", type: "image/jpeg", purpose: "any maskable" }] 
+            };
+            const manifestLink = document.createElement('link'); manifestLink.rel = 'manifest'; 
+            manifestLink.href = "data:application/manifest+json;base64," + btoa(unescape(encodeURIComponent(JSON.stringify(manifest)))); 
+            document.head.appendChild(manifestLink);
         })();
     </script>
 </head>
 <body>
 
-    <!-- SPLASH SCREEN INICIAL -->
+    <!-- === PANTALLA DE INICIO (SPLASH SCREEN ÉPICO) === -->
     <div class="splash-screen" id="splash-screen">
         <div class="splash-logo-container">
-            <div class="splash-wave wave-1"></div>
-            <div class="splash-wave wave-2"></div>
-            <div class="splash-wave wave-3"></div>
-            <svg class="splash-logo" viewBox="0 0 512 512">
-                <defs>
-                    <linearGradient id="splashBg" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#64d2ff"/>
-                        <stop offset="50%" stop-color="#7b96ec"/>
-                        <stop offset="100%" stop-color="#af52de"/>
-                    </linearGradient>
-                    <filter id="splashShadow"><feDropShadow dx="0" dy="12" stdDeviation="15" flood-color="#000000" flood-opacity="0.3"/></filter>
-                    <filter id="splashGlass"><feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.2"/></filter>
-                </defs>
-                <rect width="512" height="512" rx="115" fill="url(#splashBg)"/>
-                <circle cx="256" cy="256" r="140" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.7)" stroke-width="8" filter="url(#splashShadow)"/>
-                <path d="M210 170 L340 256 L210 342 Z" fill="#ffffff" filter="url(#splashGlass)"/>
-            </svg>
+            <!-- Ondas de choque Neón -->
+            <div class="neon-ring ring-1"></div>
+            <div class="neon-ring ring-2"></div>
+            
+            <!-- Capas para el efecto Glitch 3D RGB -->
+            <img src="WhatsApp Image 2026-06-19 at 6.10.40 PM.jpeg" class="splash-logo glitch-layer layer-red" alt="LYNOR">
+            <img src="WhatsApp Image 2026-06-19 at 6.10.40 PM.jpeg" class="splash-logo glitch-layer layer-blue" alt="LYNOR">
+            
+            <!-- Imagen Principal -->
+            <img src="WhatsApp Image 2026-06-19 at 6.10.40 PM.jpeg" class="splash-logo main-logo" alt="LYNOR Music">
         </div>
     </div>
 
@@ -431,11 +445,12 @@
 
         // === CONTROL DEL SPLASH SCREEN ===
         window.addEventListener('load', () => {
+            // El Splash Screen dura exactamente 2.8 segundos de pura animación épica
             setTimeout(() => {
                 const splash = document.getElementById('splash-screen');
                 splash.classList.add('hide');
-                setTimeout(() => splash.remove(), 600); // Liberar RAM después de ocultar
-            }, 2200); 
+                setTimeout(() => splash.remove(), 800); // Se elimina del DOM para liberar RAM
+            }, 2800); 
         });
         
         const toggleInput = document.getElementById('dark-mode-toggle');
